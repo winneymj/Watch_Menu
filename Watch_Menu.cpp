@@ -23,6 +23,7 @@
 #include "watch_menu.h"
 
 #define NOINVERT	false
+#define YPOS		64
 
 extern const uint8_t selectbar_top[];
 extern const uint8_t selectbar_bottom[];
@@ -35,9 +36,6 @@ WatchMenu::WatchMenu (Adafruit_SharpMem& display) : m_display (display)
 
 bool WatchMenu::downOption (void)
 {
-Serial.print("downOption:");
-Serial.println(menu_selected);
-
 //Serial.println("MenuManager::downOption(void)");
   menus[menu_selected]->option_selected++;
   uint8_t sel = menus[menu_selected]->option_selected;
@@ -51,9 +49,6 @@ Serial.println(menu_selected);
 
 bool WatchMenu::upOption ()
 {
-Serial.print("upOption:");
-Serial.println(menu_selected);
-
   //Serial.println("MenuManager::upOption(void)");
   menus[menu_selected]->option_selected--;
   uint8_t sel = menus[menu_selected]->option_selected;
@@ -131,14 +126,19 @@ void WatchMenu::initMenu(uint8_t num)
 }
 
 // Create a menu by allocating space
-void
-WatchMenu::createMenu (int8_t index, int8_t num_options, const char *name)
+void WatchMenu::createMenu (int8_t index, int8_t num_options, const char *name, int8_t menu_type)
 {
-  menus[index] = new s_menu; // allocate space for the menu
-  menus[index]->name = name; // Store pointer to option name
-  menus[index]->options = new s_option*[num_options]; // Allocate array of pointers to options
-  menus[index]->num_options = num_options;
-  menus[index]->option_selected = 0;
+	menus[index] = new s_menu; // allocate space for the menu
+	menus[index]->name = name; // Store pointer to option name
+	menus[index]->options = new s_option*[num_options]; // Allocate array of pointers to options
+	menus[index]->num_options = num_options;
+	menus[index]->option_selected = 0;
+	menus[index]->type = menu_type;
+
+	for (int opt_index = 0; opt_index < num_options; opt_index++)
+	{
+		menus[index]->options[opt_index] = NULL;
+	}
 }
 
 void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *name,
@@ -181,15 +181,51 @@ void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *n
   menus[menu_index]->options[opt_index]->menu_index = prev_menu_index;
 }
 
+void WatchMenu::menu_drawStr()
+{
+  const int16_t displayWidth = m_display.width();
+  const int16_t displayHeight = m_display.height();
+
+  // Copy the data from PROGMEM...max 20 chars
+  char tmpStr[20] = { 0 };
+  strcpy_P (tmpStr, menus[menu_selected]->name);
+  drawCentreString (tmpStr, displayWidth / 2, YPOS, textSize);
+
+
+//	byte count = min(MAX_MENU_ITEMS, menus[menu_selected]->num_options);
+//	for(byte pos = 0, i = menuData.scroll; i < menuData.scroll + count; pos++, i++)
+//Serial.print("menus[menu_selected]->num_options=");
+//Serial.println(menus[menu_selected]->num_options);
+	byte count = menus[menu_selected]->num_options;
+	for(byte opt = 0; opt < count; opt++)
+	{
+		char tmpStr[20] = { 0 };
+		if (NULL != menus[menu_selected]->options[opt])
+		{
+	//		if(i == menuData.selected)
+	//			drawString(">", false, 0, 8 + (8 * pos));
+			const char *str = menus[menu_selected]->options[opt]->name;
+			strcpy_P (tmpStr, str);
+		}
+		drawString(tmpStr, false, 6, YPOS + 8 + (8 * opt));
+	}
+
+}
 bool WatchMenu::updateMenu()
 {
   bool bAnimating = false;
 
+	if ( MENU_TYPE_STR == menus[menu_selected]->type)
+	{
+		menu_drawStr();
+	}
+	else
+	{
   // Get the index to the sub menu
-//	int8_t optSel = menus[menu_selected]->option_selected;
-//	int8_t menuIndex = menus[menu_selected]->options[optSel]->menu_index;
-//
-//	// See if this option was to display a paged display
+	int8_t optSel = menus[menu_selected]->option_selected;
+	int8_t menuIndex = menus[menu_selected]->options[optSel]->menu_index;
+
+	// See if this option was to display a paged display
 //	if (menuIndex == MENU_PAGED_NEXT_PREV)
 //	{
 //Serial.println("MENU_PAGED_NEXT_PREV");
@@ -199,6 +235,7 @@ bool WatchMenu::updateMenu()
     // Display as regular icon
     // Get the first menu to start with...change later to get current
     bAnimating = menu_drawIcon();
+	}
   }
 
   return bAnimating;
@@ -216,8 +253,8 @@ bool WatchMenu::menu_drawIcon()
   int x = displayWidth / 2;
   x -= 48 * menus[menu_selected]->option_selected;
 
-Serial.print("x=");
-Serial.println(x);
+//Serial.print("x=");
+//Serial.println(x);
   {
     int8_t speed;
     if (x > animX)
@@ -249,23 +286,23 @@ Serial.println(x);
   // Copy the data from PROGMEM...max 20 chars
   char tmpStr[20] = { 0 };
   strcpy_P (tmpStr, menus[menu_selected]->name);
-  drawCentreString (tmpStr, displayWidth / 2, 0, textSize);
+  drawCentreString (tmpStr, displayWidth / 2, YPOS, textSize);
 
   // Create image struct
   // FIX: struct uses heap, should use stack
   uint8_t fix = selectbar_topWidthPixels;
   s_image img = newImage((displayWidth / 2) - (selectbar_topWidthPixels / 2),
-			 14, selectbar_top, fix, 8, BLACK, NOINVERT);
+			 YPOS + 14, selectbar_top, fix, 8, BLACK, NOINVERT);
 
   // Draw ...
   ultraFastDrawBitmap (&img);
 
   // Draw ...
-  img.y = 42;
+  img.y = YPOS + 42;
   img.bitmap = selectbar_bottom;
   ultraFastDrawBitmap(&img);
 
-  img.y = 16;
+  img.y = YPOS + 16;
   img.width = 32;
   img.height = 32;
 
@@ -308,7 +345,8 @@ void WatchMenu::resetMenu ()
   }
 
   // Reset Animation
-  animX = m_display.width() / 2;
+  animX = 0;
+//  animX = m_display.width() / 2;
 }
 
 void WatchMenu::setTextSize (uint8_t size)
@@ -531,6 +569,15 @@ void WatchMenu::drawCentreString(char *str, int dX, int poY, int size)
 	m_display.print(str);
 }
 
+void WatchMenu::drawString(char* str, bool invert, byte x, byte y)
+{
+//Serial.print("drawString x,y=");
+//Serial.print(x);
+//Serial.print(",");
+//Serial.println(y);
+	m_display.setCursor(x, y);
+	m_display.print(str);
+}
 
 // --------------------------------------------------------------------------------------------//
 

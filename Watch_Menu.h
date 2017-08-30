@@ -25,6 +25,9 @@ All text above, and the splash screen must be included in any redistribution
   typedef uint8_t PortMask;
 #endif
 
+#define MENU_TYPE_STR	0
+#define MENU_TYPE_ICON	1
+
 #define MENU_EXIT              -99
 #define OPTION_NEXT_PAGE       -1
 #define OPTION_PREV_PAGE       -2
@@ -75,6 +78,7 @@ typedef struct
 	s_option **options; // Array of pointer to options
 	int8_t option_selected;
 	int8_t prev_menu;
+	int8_t type;
 }s_menu;
 
 class OLEDKeyboard
@@ -119,7 +123,7 @@ class WatchMenu
 public:
 	WatchMenu(Adafruit_SharpMem& display);
 	void initMenu(uint8_t num);
-	void createMenu(int8_t index, int8_t num_options, const char *name);
+	void createMenu(int8_t index, int8_t num_options, const char *name, int8_t menu_type = MENU_TYPE_ICON);
 	void createOption(int8_t menu_index, int8_t opt_index, const char *name, const uint8_t *icon, pFunc actionFunc);
 	void createOption(int8_t menu_index, int8_t opt_index, const char *name, const uint8_t *icon, uint8_t prev_menu_index);
 	void createOption(int8_t menu_index, int8_t opt_index, pFunc actionFunc, uint8_t prev_menu_index);
@@ -131,11 +135,14 @@ public:
 	void resetMenu(void);
 	bool menu_drawIcon();
 	void setTextSize(uint8_t size);
+	void drawString(char* str, bool invert, byte x, byte y);
 	void drawCentreString(char *str, int dX, int poY, int size);
 
 
   private:
 	void ultraFastDrawBitmap(s_image* image);
+	void menu_drawStr();
+
 
 	int8_t num_menus;
 	s_menu **menus; //Array of pointers to menus
