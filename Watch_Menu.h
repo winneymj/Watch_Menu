@@ -65,7 +65,7 @@ typedef void (*pFunc)(void);
 typedef struct
 {
 	int8_t num_items;
-	const char *name;
+	char name[20];
 	const uint8_t *icon;
 	int8_t menu_index;
 	pFunc func;
@@ -74,11 +74,13 @@ typedef struct
 typedef struct
 {
 	int8_t num_options;
-	const char *name;
+	char name[20];
 	s_option **options; // Array of pointer to options
 	int8_t option_selected;
 	int8_t prev_menu;
 	int8_t type;
+	pFunc downFunc;
+	pFunc upFunc;
 }s_menu;
 
 class OLEDKeyboard
@@ -124,13 +126,16 @@ public:
 	WatchMenu(Adafruit_SharpMem& display);
 	void initMenu(uint8_t num);
 	void createMenu(int8_t index, int8_t num_options, const char *name, int8_t menu_type = MENU_TYPE_ICON);
+	void createMenu(int8_t index, int8_t num_options, const char *name, int8_t menu_type, pFunc downFunc, pFunc upFunc);
 	void createOption(int8_t menu_index, int8_t opt_index, const char *name, const uint8_t *icon, pFunc actionFunc);
 	void createOption(int8_t menu_index, int8_t opt_index, const char *name, const uint8_t *icon, uint8_t prev_menu_index);
 	void createOption(int8_t menu_index, int8_t opt_index, pFunc actionFunc, uint8_t prev_menu_index);
 	void createOption(int8_t menu_index, int8_t opt_index, const char *name, uint8_t prev_menu_index);
 	bool updateMenu();
-	bool upOption(void);
-	bool downOption(void);
+	void upOption(void);
+	void downOption(void);
+	bool menuDown(void);
+	bool menuUp(void);
 	bool selectOption(void);
 	void resetMenu(void);
 	bool menu_drawIcon();

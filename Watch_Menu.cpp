@@ -34,30 +34,74 @@ WatchMenu::WatchMenu (Adafruit_SharpMem& display) : m_display (display)
 {
 }
 
-bool WatchMenu::downOption (void)
+bool WatchMenu::menuDown(void)
 {
-//Serial.println("MenuManager::downOption(void)");
-  menus[menu_selected]->option_selected++;
-  uint8_t sel = menus[menu_selected]->option_selected;
-
-  if (sel >= menus[menu_selected]->num_options)
+  // See if the standard down option has been overridden and call the method
+  if (NULL != menus[menu_selected]->downFunc)
   {
-    menus[menu_selected]->option_selected = 0;
+	  menus[menu_selected]->downFunc();
+	  return true;
   }
-  return true;
+  return false;
 }
 
-bool WatchMenu::upOption ()
+bool WatchMenu::menuUp()
 {
-  //Serial.println("MenuManager::upOption(void)");
-  menus[menu_selected]->option_selected--;
-  uint8_t sel = menus[menu_selected]->option_selected;
-
-  if (sel >= menus[menu_selected]->num_options)
+  if (NULL != menus[menu_selected]->upFunc)
   {
-    menus[menu_selected]->option_selected = menus[menu_selected]->num_options - 1;
+	  menus[menu_selected]->upFunc();
+	  return true;
   }
-  return true;
+  return false;
+}
+
+void WatchMenu::downOption (void)
+{
+	while (true)
+	{
+		//Serial.println("MenuManager::downOption(void)");
+		menus[menu_selected]->option_selected++;
+		uint8_t sel = menus[menu_selected]->option_selected;
+
+		if (sel >= menus[menu_selected]->num_options)
+		{
+			menus[menu_selected]->option_selected = 0;
+		}
+
+		// See if an option has been defined.  Exit if got one.
+		if (NULL != menus[menu_selected]->options[menus[menu_selected]->option_selected])
+		{
+//Serial.println("-------------------------");
+//Serial.print("menus[menu_selected]->option_selected=");
+//Serial.println(menus[menu_selected]->option_selected);
+//Serial.println("-------------------------");
+			return;
+		}
+	}
+}
+
+void WatchMenu::upOption ()
+{
+	while (true)
+	{
+		//Serial.println("MenuManager::upOption(void)");
+		menus[menu_selected]->option_selected--;
+		uint8_t sel = menus[menu_selected]->option_selected;
+
+		if (sel >= menus[menu_selected]->num_options)
+		{
+			menus[menu_selected]->option_selected = menus[menu_selected]->num_options - 1;
+		}
+		// See if an option has been defined.  Exit if got one.
+		if (NULL != menus[menu_selected]->options[menus[menu_selected]->option_selected])
+		{
+	//Serial.println("-------------------------");
+	//Serial.print("menus[menu_selected]->option_selected=");
+	//Serial.println(menus[menu_selected]->option_selected);
+	//Serial.println("-------------------------");
+			return;
+		}
+	}
 }
 
 bool WatchMenu::selectOption (void)
@@ -120,20 +164,27 @@ Serial.println(menu_selected);
 
 void WatchMenu::initMenu(uint8_t num)
 {
-  num_menus = num;
-  menus = new s_menu*[num]; // Allocate space for the menus.  Array of pointers to menus
-  menu_selected = 0;
+	num_menus = num;
+	menus = new s_menu*[num]; // Allocate space for the menus.  Array of pointers to menus
+	menu_selected = 0;
+}
+
+void WatchMenu::createMenu (int8_t index, int8_t num_options, const char *name, int8_t menu_type)
+{
+	createMenu (index, num_options, name, menu_type, NULL, NULL);
 }
 
 // Create a menu by allocating space
-void WatchMenu::createMenu (int8_t index, int8_t num_options, const char *name, int8_t menu_type)
+void WatchMenu::createMenu (int8_t index, int8_t num_options, const char *name, int8_t menu_type, pFunc downFunc, pFunc upFunc)
 {
 	menus[index] = new s_menu; // allocate space for the menu
-	menus[index]->name = name; // Store pointer to option name
+	strcpy_P(menus[index]->name, name);
 	menus[index]->options = new s_option*[num_options]; // Allocate array of pointers to options
 	menus[index]->num_options = num_options;
 	menus[index]->option_selected = 0;
 	menus[index]->type = menu_type;
+	menus[index]->downFunc = downFunc;
+	menus[index]->upFunc = upFunc;
 
 	for (int opt_index = 0; opt_index < num_options; opt_index++)
 	{
@@ -144,21 +195,21 @@ void WatchMenu::createMenu (int8_t index, int8_t num_options, const char *name, 
 void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *name,
 			const uint8_t *icon, pFunc actionFunc)
 {
-  menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
-  menus[menu_index]->options[opt_index]->func = actionFunc;
-  menus[menu_index]->options[opt_index]->icon = icon;
-  menus[menu_index]->options[opt_index]->name = name;
-  menus[menu_index]->options[opt_index]->menu_index = -1;
+	menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
+	menus[menu_index]->options[opt_index]->func = actionFunc;
+	menus[menu_index]->options[opt_index]->icon = icon;
+	strcpy_P(menus[menu_index]->options[opt_index]->name, name);
+	menus[menu_index]->options[opt_index]->menu_index = -1;
 }
 
 void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *name,
 			const uint8_t *icon, uint8_t prev_menu_index)
 {
-  menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
-  menus[menu_index]->options[opt_index]->func = NULL;
-  menus[menu_index]->options[opt_index]->icon = icon;
-  menus[menu_index]->options[opt_index]->name = name;
-  menus[menu_index]->options[opt_index]->menu_index = prev_menu_index;
+	menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
+	menus[menu_index]->options[opt_index]->func = NULL;
+	menus[menu_index]->options[opt_index]->icon = icon;
+	strcpy_P(menus[menu_index]->options[opt_index]->name, name);
+	menus[menu_index]->options[opt_index]->menu_index = prev_menu_index;
 }
 
 void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, pFunc actionFunc,
@@ -174,22 +225,22 @@ void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, pFunc actionF
 void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *name,
 			uint8_t prev_menu_index)
 {
-  menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
-//	menus[menu_index]->options[opt_index]->func = actionFunc;
-//	menus[menu_index]->options[opt_index]->icon = icon;
-  menus[menu_index]->options[opt_index]->name = name;
-  menus[menu_index]->options[opt_index]->menu_index = prev_menu_index;
+	menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
+	//	menus[menu_index]->options[opt_index]->func = actionFunc;
+	//	menus[menu_index]->options[opt_index]->icon = icon;
+	strcpy_P(menus[menu_index]->options[opt_index]->name, name);
+	menus[menu_index]->options[opt_index]->menu_index = prev_menu_index;
 }
 
 void WatchMenu::menu_drawStr()
 {
-  const int16_t displayWidth = m_display.width();
-  const int16_t displayHeight = m_display.height();
+	const int16_t displayWidth = m_display.width();
+	const int16_t displayHeight = m_display.height();
 
-  // Copy the data from PROGMEM...max 20 chars
-  char tmpStr[20] = { 0 };
-  strcpy_P (tmpStr, menus[menu_selected]->name);
-  drawCentreString (tmpStr, displayWidth / 2, YPOS, textSize);
+	// Copy the data from PROGMEM...max 20 chars
+	char tmpStr[20] = { 0 };
+	strcpy_P (tmpStr, menus[menu_selected]->name);
+	drawCentreString (tmpStr, displayWidth / 2, YPOS, textSize);
 
 
 //	byte count = min(MAX_MENU_ITEMS, menus[menu_selected]->num_options);
@@ -202,9 +253,16 @@ void WatchMenu::menu_drawStr()
 		char tmpStr[20] = { 0 };
 		if (NULL != menus[menu_selected]->options[opt])
 		{
-	//		if(i == menuData.selected)
-	//			drawString(">", false, 0, 8 + (8 * pos));
+//Serial.println("menus[menu_selected]->options[opt]!=NULL");
+			if(opt == menus[menu_selected]->option_selected)
+			{
+//Serial.print("opt selected=");
+//Serial.println(opt);
+				drawString(">", false, 0, YPOS + 8 + (8 * opt));
+			}
 			const char *str = menus[menu_selected]->options[opt]->name;
+//Serial.print("str=");
+//Serial.println(str);
 			strcpy_P (tmpStr, str);
 		}
 		drawString(tmpStr, false, 6, YPOS + 8 + (8 * opt));
