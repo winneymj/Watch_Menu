@@ -71,10 +71,10 @@ void WatchMenu::downOption (void)
 		// See if an option has been defined.  Exit if got one.
 		if (NULL != menus[menu_selected]->options[menus[menu_selected]->option_selected])
 		{
-//Serial.println("-------------------------");
-//Serial.print("menus[menu_selected]->option_selected=");
-//Serial.println(menus[menu_selected]->option_selected);
-//Serial.println("-------------------------");
+Serial.println("-------------------------");
+Serial.print("menus[menu_selected]->option_selected=");
+Serial.println(menus[menu_selected]->option_selected);
+Serial.println("-------------------------");
 			return;
 		}
 	}
@@ -95,10 +95,10 @@ void WatchMenu::upOption ()
 		// See if an option has been defined.  Exit if got one.
 		if (NULL != menus[menu_selected]->options[menus[menu_selected]->option_selected])
 		{
-	//Serial.println("-------------------------");
-	//Serial.print("menus[menu_selected]->option_selected=");
-	//Serial.println(menus[menu_selected]->option_selected);
-	//Serial.println("-------------------------");
+Serial.println("-------------------------");
+Serial.print("menus[menu_selected]->option_selected=");
+Serial.println(menus[menu_selected]->option_selected);
+Serial.println("-------------------------");
 			return;
 		}
 	}
@@ -380,9 +380,9 @@ bool WatchMenu::menu_drawIcon()
 
   uint8_t sel_opt = menus[menu_selected]->option_selected;
   strcpy_P (tmpStr, menus[menu_selected]->options[sel_opt]->name);
-  m_display.setTextSize(textSize);
-  m_display.setTextColor(BLACK);
-  m_display.setCursor(0, displayHeight - 8);
+//  m_display.setTextSize(textSize);
+//  m_display.setTextColor(BLACK);
+//  m_display.setCursor(0, displayHeight - 8);
 
   return bAnimating;
 }
@@ -409,7 +409,8 @@ void WatchMenu::resetMenu ()
 
 void WatchMenu::setTextSize (uint8_t size)
 {
-  textSize = size;
+	m_display.setTextSize(size);
+	textSize = size;
 }
 // --------------------------------------------------------------------------------------------//
 
