@@ -654,9 +654,11 @@ void WatchMenu::drawString(char* str, bool invert, byte x, byte y)
 //Serial.print(",");
 //Serial.println(y);
 	if (invert)
-		m_display.setTextColor(BLACK);
+		m_display.setTextColor(WHITE, BLACK);
 	m_display.setCursor(x, y);
 	m_display.print(str);
+	if (invert)
+		m_display.setTextColor(BLACK, WHITE);
 }
 
 // --------------------------------------------------------------------------------------------//
