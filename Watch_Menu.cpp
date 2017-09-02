@@ -34,6 +34,21 @@ WatchMenu::WatchMenu (Adafruit_SharpMem& display) : m_display (display)
 {
 }
 
+void WatchMenu::setDownFunc(pFunc func)
+{
+	menus[menu_selected]->downFunc = func;
+}
+
+void WatchMenu::setUpFunc(pFunc func)
+{
+	menus[menu_selected]->upFunc = func;
+}
+
+void WatchMenu::setDrawFunc(pFunc func)
+{
+	menus[menu_selected]->drawFunc = func;
+}
+
 bool WatchMenu::menuDown(void)
 {
   // See if the standard down option has been overridden and call the method
@@ -185,6 +200,7 @@ void WatchMenu::createMenu (int8_t index, int8_t num_options, const char *name, 
 	menus[index]->type = menu_type;
 	menus[index]->downFunc = downFunc;
 	menus[index]->upFunc = upFunc;
+	menus[index]->drawFunc = NULL;
 
 	for (int opt_index = 0; opt_index < num_options; opt_index++)
 	{
@@ -295,6 +311,9 @@ bool WatchMenu::updateMenu()
     bAnimating = menu_drawIcon();
 	}
   }
+	// Draw stuff
+	if(menus[menu_selected]->drawFunc != NULL)
+		menus[menu_selected]->drawFunc();
 
   return bAnimating;
 }
@@ -634,6 +653,8 @@ void WatchMenu::drawString(char* str, bool invert, byte x, byte y)
 //Serial.print(x);
 //Serial.print(",");
 //Serial.println(y);
+	if (invert)
+		m_display.setTextColor(BLACK);
 	m_display.setCursor(x, y);
 	m_display.print(str);
 }

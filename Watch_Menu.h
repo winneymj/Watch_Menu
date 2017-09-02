@@ -81,6 +81,7 @@ typedef struct
 	int8_t type;
 	pFunc downFunc;
 	pFunc upFunc;
+	pFunc drawFunc;
 }s_menu;
 
 class OLEDKeyboard
@@ -142,6 +143,9 @@ public:
 	void setTextSize(uint8_t size);
 	void drawString(char* str, bool invert, byte x, byte y);
 	void drawCentreString(char *str, int dX, int poY, int size);
+	void setDownFunc(pFunc func);
+	void setUpFunc(pFunc func);
+	void setDrawFunc(pFunc func);
 
 
   private:
