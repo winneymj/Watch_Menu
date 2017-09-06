@@ -19,6 +19,23 @@
 #endif
 #include <stdlib.h>
 
+// Many (but maybe not all) non-AVR board installs define macros
+// for compatibility with existing PROGMEM-reading AVR code.
+// Do our own checks and defines here for good measure...
+
+#ifndef pgm_read_byte
+ #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
+#endif
+
+// Pointers are a peculiar case...typically 16-bit on AVR boards,
+// 32 bits elsewhere.  Try to accommodate both...
+
+#if !defined(__INT_MAX__) || (__INT_MAX__ > 0xFFFF)
+ #define pgm_read_pointer(addr) ((void *)pgm_read_dword(addr))
+#else
+ #define pgm_read_pointer(addr) ((void *)pgm_read_word(addr))
+#endif
+
 #include "Adafruit_SharpMem.h"
 #include "watch_menu.h"
 
@@ -182,6 +199,11 @@ void WatchMenu::initMenu(uint8_t num)
 	num_menus = num;
 	menus = new s_menu*[num]; // Allocate space for the menus.  Array of pointers to menus
 	menu_selected = 0;
+	m_font = NULL;
+	// Default font to default 5x7 builtin
+	m_fontWidth = 5;
+	m_fontHeight = 7;
+
 }
 
 void WatchMenu::createMenu (int8_t index, int8_t num_options, const char *name, int8_t menu_type)
@@ -274,14 +296,14 @@ void WatchMenu::menu_drawStr()
 			{
 //Serial.print("opt selected=");
 //Serial.println(opt);
-				drawString(">", false, 0, YPOS + 8 + (8 * opt));
+				drawString(">", false, 0, YPOS + (15 * opt));
 			}
 			const char *str = menus[menu_selected]->options[opt]->name;
 //Serial.print("str=");
 //Serial.println(str);
 			strcpy_P (tmpStr, str);
 		}
-		drawString(tmpStr, false, 6, YPOS + 8 + (8 * opt));
+		drawString(tmpStr, false, fontWidth(), YPOS + (15 * opt));
 	}
 
 }
@@ -659,6 +681,26 @@ void WatchMenu::drawString(char* str, bool invert, byte x, byte y)
 	m_display.print(str);
 	if (invert)
 		m_display.setTextColor(BLACK, WHITE);
+}
+
+void WatchMenu::setFont(const GFXfont *font)
+{
+	m_display.setFont(font);
+	m_font = (GFXfont *)font; // Save the font
+	// Get font dimensions
+	GFXglyph *glyph = &(((GFXglyph *)pgm_read_pointer(&m_font->glyph))[0]); // Get first char and assume all are same width
+	m_fontWidth = pgm_read_byte(&glyph->xAdvance); // Width of definition is 16 bits wide but in pixels is only 10.
+	m_fontHeight = pgm_read_byte(&glyph->height);
+}
+
+GFXfont *WatchMenu::getFont(void)
+{
+	return m_font;
+}
+
+void WatchMenu::selectedOption(int8_t menu_index, int8_t option_index)
+{
+	menus[menu_index]->option_selected = option_index;
 }
 
 // --------------------------------------------------------------------------------------------//

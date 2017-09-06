@@ -146,6 +146,11 @@ public:
 	void setDownFunc(pFunc func);
 	void setUpFunc(pFunc func);
 	void setDrawFunc(pFunc func);
+	void setFont(const GFXfont *font);
+	GFXfont *getFont(void);
+	void selectedOption(int8_t menu_index, int8_t option_index);
+	uint8_t fontWidth(){ return m_fontWidth; };
+	uint8_t fontHeight(){ return m_fontHeight; };
 
 
   private:
@@ -159,6 +164,9 @@ public:
 	int animX;  // menu animation X pos
 	Adafruit_SharpMem& m_display;
 	uint8_t textSize;
+	GFXfont *m_font;
+	uint8_t m_fontWidth;
+	uint8_t m_fontHeight;
 };
 
 
