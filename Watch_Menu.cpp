@@ -286,7 +286,10 @@ void WatchMenu::menu_drawStr()
 //Serial.print("menus[menu_selected]->num_options=");
 //Serial.println(menus[menu_selected]->num_options);
 	byte count = menus[menu_selected]->num_options;
-	for(byte opt = 0; opt < count; opt++)
+	byte opt = 0;
+	// The last option is assumed to be exit...so draw on same line to the bottom
+	// right of the display
+	for(; opt < count - 1; opt++)
 	{
 		char tmpStr[20] = { 0 };
 		if (NULL != menus[menu_selected]->options[opt])
@@ -305,6 +308,15 @@ void WatchMenu::menu_drawStr()
 		}
 		drawString(tmpStr, false, fontWidth(), YPOS + (15 * opt));
 	}
+
+	// Display the exit
+	if(opt == menus[menu_selected]->option_selected)
+	{
+		drawString(">", false, fontWidth() * 7, YPOS + (15 * (opt - 1)));
+	}
+	const char *str = menus[menu_selected]->options[opt]->name;
+	strcpy_P (tmpStr, str);
+	drawString(tmpStr, false, fontWidth() * 8, YPOS + (15 * (opt - 1)));
 
 }
 bool WatchMenu::updateMenu()
