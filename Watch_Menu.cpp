@@ -167,7 +167,8 @@ Serial.println(menu_selected);
       menu_selected = menus[menu_selected]->prev_menu;
 Serial.print("menu_selected=");
 Serial.println(menu_selected);
-      // Reset the option back to zero
+		menus[menu_selected]->option_selected = 0;
+// Reset the option back to zero
       //			mMenus[mMenuSelected]->mOptionSelected = 0;
     }
     else
@@ -227,6 +228,7 @@ void WatchMenu::createMenu (int8_t index, int8_t num_options, const char *name, 
 	for (int opt_index = 0; opt_index < num_options; opt_index++)
 	{
 		menus[index]->options[opt_index] = NULL;
+		menus[index]->prev_menu = NULL;
 	}
 }
 
@@ -321,6 +323,10 @@ void WatchMenu::menu_drawStr()
 }
 bool WatchMenu::updateMenu()
 {
+#ifndef SLEEP_PROCESSOR
+//Serial.println("updateMenu():Enter");
+#endif
+
   bool bAnimating = false;
 
 	if ( MENU_TYPE_STR == menus[menu_selected]->type)
