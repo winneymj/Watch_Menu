@@ -63,7 +63,13 @@ void WatchMenu::setUpFunc(pFunc func)
 
 void WatchMenu::setDrawFunc(pFunc func)
 {
+//Serial.println("setDrawFunc(): Enter");
+
+//Serial.print("menu_selected=");
+//Serial.println(menu_selected);
 	menus[menu_selected]->drawFunc = func;
+Serial.print("menus[menu_selected]->drawFunc == NULL:");
+Serial.println(menus[menu_selected]->drawFunc == NULL);
 }
 
 bool WatchMenu::menuDown(void)
@@ -103,10 +109,10 @@ void WatchMenu::downOption (void)
 		// See if an option has been defined.  Exit if got one.
 		if (NULL != menus[menu_selected]->options[menus[menu_selected]->option_selected])
 		{
-Serial.println("-------------------------");
-Serial.print("menus[menu_selected]->option_selected=");
-Serial.println(menus[menu_selected]->option_selected);
-Serial.println("-------------------------");
+//Serial.println("-------------------------");
+//Serial.print("menus[menu_selected]->option_selected=");
+//Serial.println(menus[menu_selected]->option_selected);
+//Serial.println("-------------------------");
 			return;
 		}
 	}
@@ -127,10 +133,10 @@ void WatchMenu::upOption ()
 		// See if an option has been defined.  Exit if got one.
 		if (NULL != menus[menu_selected]->options[menus[menu_selected]->option_selected])
 		{
-Serial.println("-------------------------");
-Serial.print("menus[menu_selected]->option_selected=");
-Serial.println(menus[menu_selected]->option_selected);
-Serial.println("-------------------------");
+//Serial.println("-------------------------");
+//Serial.print("menus[menu_selected]->option_selected=");
+//Serial.println(menus[menu_selected]->option_selected);
+//Serial.println("-------------------------");
 			return;
 		}
 	}
@@ -352,9 +358,17 @@ bool WatchMenu::updateMenu()
 	}
   }
 	// Draw stuff
+#ifndef SLEEP_PROCESSOR
+//Serial.print("menu_selected=");
+//Serial.println(menu_selected);
+#endif
 	if(menus[menu_selected]->drawFunc != NULL)
+	{
+//#ifndef SLEEP_PROCESSOR
+//Serial.println("menus[menu_selected]->drawFunc!=NULL");
+//#endif
 		menus[menu_selected]->drawFunc();
-
+	}
   return bAnimating;
 }
 
