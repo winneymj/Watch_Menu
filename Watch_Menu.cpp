@@ -333,6 +333,8 @@ bool WatchMenu::updateMenu()
 //Serial.println("updateMenu():Enter");
 #endif
 
+  m_display.setFont(m_font);
+
   bool bAnimating = false;
 
 	if ( MENU_TYPE_STR == menus[menu_selected]->type)
