@@ -68,6 +68,8 @@ typedef struct
 	char name[20];
 	const uint8_t *icon;
 	int8_t menu_index;
+	int8_t invert_start;
+	int8_t invert_length;
 	pFunc func;
 }s_option;
 
@@ -132,6 +134,8 @@ public:
 	void createOption(int8_t menu_index, int8_t opt_index, const char *name, const uint8_t *icon, uint8_t prev_menu_index);
 	void createOption(int8_t menu_index, int8_t opt_index, pFunc actionFunc, uint8_t prev_menu_index);
 	void createOption(int8_t menu_index, int8_t opt_index, const char *name, uint8_t prev_menu_index);
+	void createOption(int8_t menu_index, int8_t opt_index, int16_t invert_start, int16_t invert_length, const char *name, const uint8_t *icon, pFunc actionFunc);
+
 	bool updateMenu();
 	void upOption(void);
 	void downOption(void);
@@ -151,6 +155,7 @@ public:
 	void selectedOption(int8_t menu_index, int8_t option_index);
 	uint8_t fontWidth(){ return m_fontWidth; };
 	uint8_t fontHeight(){ return m_fontHeight; };
+	void setStringMenuOptionInverted(int8_t menu_index, int8_t opt_index, int8_t charStart, int8_t length);
 
 
   private:

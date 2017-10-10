@@ -238,6 +238,15 @@ void WatchMenu::createMenu (int8_t index, int8_t num_options, const char *name, 
 	}
 }
 
+void WatchMenu::createOption (int8_t menu_index, int8_t opt_index,
+	int16_t invert_start, int16_t invert_length, const char *name,
+	const uint8_t *icon, pFunc actionFunc)
+{
+	createOption (menu_index, opt_index, name, icon, actionFunc);
+	menus[menu_index]->options[opt_index]->invert_start = invert_start;
+	menus[menu_index]->options[opt_index]->invert_length = invert_length;
+}
+
 void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *name,
 			const uint8_t *icon, pFunc actionFunc)
 {
@@ -246,6 +255,8 @@ void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *n
 	menus[menu_index]->options[opt_index]->icon = icon;
 	strcpy_P(menus[menu_index]->options[opt_index]->name, name);
 	menus[menu_index]->options[opt_index]->menu_index = -1;
+	menus[menu_index]->options[opt_index]->invert_start = -1;
+	menus[menu_index]->options[opt_index]->invert_length = 0;
 }
 
 void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *name,
@@ -256,16 +267,20 @@ void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *n
 	menus[menu_index]->options[opt_index]->icon = icon;
 	strcpy_P(menus[menu_index]->options[opt_index]->name, name);
 	menus[menu_index]->options[opt_index]->menu_index = prev_menu_index;
+	menus[menu_index]->options[opt_index]->invert_start = -1;
+	menus[menu_index]->options[opt_index]->invert_length = 0;
 }
 
 void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, pFunc actionFunc,
 			uint8_t prev_menu_index)
 {
-  menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
-  menus[menu_index]->options[opt_index]->func = actionFunc;
-//	menus[menu_index]->options[opt_index]->icon = icon;
-//	menus[menu_index]->options[opt_index]->name = name;
-  menus[menu_index]->options[opt_index]->menu_index = prev_menu_index;
+	menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
+	menus[menu_index]->options[opt_index]->func = actionFunc;
+	//	menus[menu_index]->options[opt_index]->icon = icon;
+	//	menus[menu_index]->options[opt_index]->name = name;
+	menus[menu_index]->options[opt_index]->menu_index = prev_menu_index;
+	menus[menu_index]->options[opt_index]->invert_start = -1;
+	menus[menu_index]->options[opt_index]->invert_length = 0;
 }
 
 void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *name,
@@ -276,6 +291,23 @@ void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *n
 	//	menus[menu_index]->options[opt_index]->icon = icon;
 	strcpy_P(menus[menu_index]->options[opt_index]->name, name);
 	menus[menu_index]->options[opt_index]->menu_index = prev_menu_index;
+	menus[menu_index]->options[opt_index]->invert_start = -1;
+	menus[menu_index]->options[opt_index]->invert_length = 0;
+}
+
+void WatchMenu::setStringMenuOptionInverted(int8_t menu_index, int8_t opt_index, int8_t charStart, int8_t length)
+{
+Serial.println("setStringMenuOptionInverted:enter");
+	if (NULL != menus[menu_index]->options[opt_index])
+	{
+Serial.print("setStringMenuOptionInverted:menu_index=");
+Serial.println(menu_index);
+Serial.print("setStringMenuOptionInverted:opt_index=");
+Serial.println(opt_index);
+		menus[menu_index]->options[opt_index]->invert_start = charStart;
+		menus[menu_index]->options[opt_index]->invert_length = length;
+	}
+Serial.println("setStringMenuOptionInverted:exit");
 }
 
 void WatchMenu::menu_drawStr()
@@ -286,13 +318,11 @@ void WatchMenu::menu_drawStr()
 	// Copy the data from PROGMEM...max 20 chars
 	char tmpStr[20] = { 0 };
 	strcpy_P (tmpStr, menus[menu_selected]->name);
-	drawCentreString (tmpStr, displayWidth / 2, YPOS, textSize);
+	// Calculate Y position using the height of the font.
 
+	uint8_t h = fontHeight() + (fontHeight() / 2);  // Add some spacing
+	drawCentreString (tmpStr, displayWidth / 2, YPOS + h, textSize);
 
-//	byte count = min(MAX_MENU_ITEMS, menus[menu_selected]->num_options);
-//	for(byte pos = 0, i = menuData.scroll; i < menuData.scroll + count; pos++, i++)
-//Serial.print("menus[menu_selected]->num_options=");
-//Serial.println(menus[menu_selected]->num_options);
 	byte count = menus[menu_selected]->num_options;
 	byte opt = 0;
 	// The last option is assumed to be exit...so draw on same line to the bottom
@@ -302,29 +332,56 @@ void WatchMenu::menu_drawStr()
 		char tmpStr[20] = { 0 };
 		if (NULL != menus[menu_selected]->options[opt])
 		{
-//Serial.println("menus[menu_selected]->options[opt]!=NULL");
 			if(opt == menus[menu_selected]->option_selected)
 			{
-//Serial.print("opt selected=");
-//Serial.println(opt);
-				drawString(">", false, 0, YPOS + (15 * opt));
+				drawString(">", false, 0, YPOS + (h * (opt + 2)));
 			}
 			const char *str = menus[menu_selected]->options[opt]->name;
-//Serial.print("str=");
-//Serial.println(str);
 			strcpy_P (tmpStr, str);
 		}
-		drawString(tmpStr, false, fontWidth(), YPOS + (15 * opt));
+
+		// See about inverting some text
+		int16_t invStart = menus[menu_selected]->options[opt]->invert_start;
+		int16_t invLen = menus[menu_selected]->options[opt]->invert_length;
+
+		if (invStart != -1)
+		{
+			// Split the string into 3 parts around the invertion
+			char tmpStartStr[20] = { 0 };
+			strncpy_P(tmpStartStr, tmpStr, invStart);
+			char tmpInvertStr[20] = { 0 };
+			strncpy_P(tmpInvertStr, tmpStr + invStart, invLen);
+			char tmpEndStr[20] = { 0 };
+			strcpy_P(tmpEndStr, tmpStr + invStart + invLen);
+			int16_t ypos = YPOS + (h * (opt + 2));
+			int16_t xpos = fontWidth();
+
+			drawString(tmpStartStr, false, xpos, ypos);
+			xpos += fontWidth() * strlen(tmpStartStr);
+			// Display black background
+        	m_display.fillRect(xpos, ypos - (fontHeight() +  1), fontWidth() * invLen, fontHeight() +  3, BLACK);
+
+			// Back to white on black
+	        m_display.setTextColor(WHITE, BLACK);
+			drawString(tmpInvertStr, false, xpos, ypos);
+	        m_display.setTextColor(BLACK, WHITE);
+			xpos += fontWidth() * strlen(tmpInvertStr);
+			drawString(tmpEndStr, false, xpos, ypos);
+		}
+		else
+		{
+			drawString(tmpStr, false, fontWidth(), YPOS + (h * (opt + 2)));
+		}
 	}
 
 	// Display the exit
 	if(opt == menus[menu_selected]->option_selected)
 	{
-		drawString(">", false, fontWidth() * 7, YPOS + (15 * (opt - 1)));
+		drawString(">", false, fontWidth() * 7, YPOS + (h * (opt + 1)));
 	}
 	const char *str = menus[menu_selected]->options[opt]->name;
 	strcpy_P (tmpStr, str);
-	drawString(tmpStr, false, fontWidth() * 8, YPOS + (15 * (opt - 1)));
+	drawString(tmpStr, false, fontWidth() * 8, YPOS + (h * (opt + 1)));
 
 }
 bool WatchMenu::updateMenu()
@@ -419,7 +476,14 @@ bool WatchMenu::menu_drawIcon()
   // Copy the data from PROGMEM...max 20 chars
   char tmpStr[20] = { 0 };
   strcpy_P (tmpStr, menus[menu_selected]->name);
-  drawCentreString (tmpStr, displayWidth / 2, YPOS, textSize);
+  int16_t tempX;
+  int16_t tempY;
+  uint16_t w;
+  uint16_t h;
+
+  // Get the string height specifically.
+  m_display.getTextBounds(tmpStr, 0, 0, &tempX, &tempY, &w, &h);
+  drawCentreString (tmpStr, displayWidth / 2, YPOS + h, textSize);
 
   // Create image struct
   // FIX: struct uses heap, should use stack
@@ -721,10 +785,17 @@ void WatchMenu::setFont(const GFXfont *font)
 {
 	m_display.setFont(font);
 	m_font = (GFXfont *)font; // Save the font
+	// Get font dimensions, build a ABC and get width  / 3
+	int16_t tempX;
+	int16_t tempY;
+	uint16_t w;
+	uint16_t h;
 	// Get font dimensions
 	GFXglyph *glyph = &(((GFXglyph *)pgm_read_pointer(&m_font->glyph))[0]); // Get first char and assume all are same width
 	m_fontWidth = pgm_read_byte(&glyph->xAdvance); // Width of definition is 16 bits wide but in pixels is only 10.
-	m_fontHeight = pgm_read_byte(&glyph->height);
+	// Get the string width
+	m_display.getTextBounds(PSTR("A"), 0, 0, &tempX, &tempY, &w, &h);
+	m_fontHeight = h;
 }
 
 GFXfont *WatchMenu::getFont(void)
