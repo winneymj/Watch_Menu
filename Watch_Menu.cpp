@@ -68,8 +68,8 @@ void WatchMenu::setDrawFunc(pFunc func)
 //Serial.print("menu_selected=");
 //Serial.println(menu_selected);
 	menus[menu_selected]->drawFunc = func;
-Serial.print("menus[menu_selected]->drawFunc == NULL:");
-Serial.println(menus[menu_selected]->drawFunc == NULL);
+//Serial.print("menus[menu_selected]->drawFunc == NULL:");
+//Serial.println(menus[menu_selected]->drawFunc == NULL);
 }
 
 bool WatchMenu::menuDown(void)
@@ -150,29 +150,29 @@ bool WatchMenu::selectOption (void)
   int8_t optSel = menus[menu_selected]->option_selected;
   pFunc funct = menus[menu_selected]->options[optSel]->func;
   bool subMenu = (funct == NULL);
-Serial.println("-------------------------");
-Serial.print("menu_selected=");
-Serial.println(menu_selected);
-Serial.print("optSel=");
-Serial.println(optSel);
-Serial.print("subMenu=");
-Serial.println(subMenu);
+//Serial.println("-------------------------");
+//Serial.print("menu_selected=");
+//Serial.println(menu_selected);
+//Serial.print("optSel=");
+//Serial.println(optSel);
+//Serial.print("subMenu=");
+//Serial.println(subMenu);
 
   if (subMenu == true)
   {
     // Get the index to the sub menu
     int8_t menuIndex = menus[menu_selected]->options[optSel]->menu_index;
 
-Serial.print("menuIndex=");
-Serial.println(menuIndex);
+//Serial.print("menuIndex=");
+//Serial.println(menuIndex);
     // See if this is the exit option
     if (menuIndex == MENU_EXIT)
     {
-Serial.print("menu_selected=");
-Serial.println(menu_selected);
+//Serial.print("menu_selected=");
+//Serial.println(menu_selected);
       menu_selected = menus[menu_selected]->prev_menu;
-Serial.print("menu_selected=");
-Serial.println(menu_selected);
+//Serial.print("menu_selected=");
+//Serial.println(menu_selected);
 		menus[menu_selected]->option_selected = 0;
 // Reset the option back to zero
       //			mMenus[mMenuSelected]->mOptionSelected = 0;
@@ -297,17 +297,17 @@ void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *n
 
 void WatchMenu::setStringMenuOptionInverted(int8_t menu_index, int8_t opt_index, int8_t charStart, int8_t length)
 {
-Serial.println("setStringMenuOptionInverted:enter");
+//Serial.println("setStringMenuOptionInverted:enter");
 	if (NULL != menus[menu_index]->options[opt_index])
 	{
-Serial.print("setStringMenuOptionInverted:menu_index=");
-Serial.println(menu_index);
-Serial.print("setStringMenuOptionInverted:opt_index=");
-Serial.println(opt_index);
+//Serial.print("setStringMenuOptionInverted:menu_index=");
+//Serial.println(menu_index);
+//Serial.print("setStringMenuOptionInverted:opt_index=");
+//Serial.println(opt_index);
 		menus[menu_index]->options[opt_index]->invert_start = charStart;
 		menus[menu_index]->options[opt_index]->invert_length = length;
 	}
-Serial.println("setStringMenuOptionInverted:exit");
+//Serial.println("setStringMenuOptionInverted:exit");
 }
 
 void WatchMenu::menu_drawStr()
@@ -374,15 +374,17 @@ void WatchMenu::menu_drawStr()
 		}
 	}
 
-	// Display the exit
+	// Display the exit at right side of the screen
+	const char *str = menus[menu_selected]->options[opt]->name;
+	uint8_t exitStrLen = strlen(str) + 2; // Add 1 for the leading '>' and 1 for space at end
+	uint16_t xpos = m_display.width() - (exitStrLen * fontWidth());
+
 	if(opt == menus[menu_selected]->option_selected)
 	{
-		drawString(">", false, fontWidth() * 7, YPOS + (h * (opt + 1)));
+		drawString(">", false, xpos, YPOS + (h * (opt + 1)));
 	}
-	const char *str = menus[menu_selected]->options[opt]->name;
 	strcpy_P (tmpStr, str);
-	drawString(tmpStr, false, fontWidth() * 8, YPOS + (h * (opt + 1)));
-
+	drawString(tmpStr, false, xpos + fontWidth(), YPOS + (h * (opt + 1)));
 }
 bool WatchMenu::updateMenu()
 {
