@@ -81,6 +81,7 @@ typedef struct
 	int8_t option_selected;
 	int8_t prev_menu;
 	int8_t type;
+	int16_t animX;  // menu animation X pos
 	pFunc downFunc;
 	pFunc upFunc;
 	pFunc drawFunc;
@@ -166,7 +167,6 @@ public:
 	int8_t num_menus;
 	s_menu **menus; //Array of pointers to menus
 	uint8_t menu_selected;
-	int animX;  // menu animation X pos
 	Adafruit_SharpMem& m_display;
 	uint8_t textSize;
 	GFXfont *m_font;

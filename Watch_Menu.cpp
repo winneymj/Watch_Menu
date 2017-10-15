@@ -146,7 +146,7 @@ bool WatchMenu::selectOption (void)
 {
   // Move to the next menu, assuming the option selected is a menu
 
-//Serial.println("MenuManager::selectOption(void)");
+//Serial.println("WatchMenu::selectOption(void)");
   int8_t optSel = menus[menu_selected]->option_selected;
   pFunc funct = menus[menu_selected]->options[optSel]->func;
   bool subMenu = (funct == NULL);
@@ -165,15 +165,24 @@ bool WatchMenu::selectOption (void)
 
 //Serial.print("menuIndex=");
 //Serial.println(menuIndex);
-    // See if this is the exit option
-    if (menuIndex == MENU_EXIT)
+    // See if this is the exit option (assumed last option)
+    if (optSel == (menus[menu_selected]->num_options - 1))
     {
-//Serial.print("menu_selected=");
-//Serial.println(menu_selected);
-      menu_selected = menus[menu_selected]->prev_menu;
-//Serial.print("menu_selected=");
-//Serial.println(menu_selected);
+//Serial.println("EXIT SEL");
+		// Reset sub menu selected option to zero before we exit, so when
+		// we come back in we are back at start
 		menus[menu_selected]->option_selected = 0;
+
+		// Reset animation X
+		menus[menu_selected]->animX = m_display.width() / 2;
+
+//Serial.print("menu_selected=");
+//Serial.println(menu_selected);
+		// Go back to previous menu
+		menu_selected = menus[menu_selected]->prev_menu;
+//Serial.print("menu_selected=");
+//Serial.println(menu_selected);
+
 // Reset the option back to zero
       //			mMenus[mMenuSelected]->mOptionSelected = 0;
     }
@@ -185,12 +194,20 @@ bool WatchMenu::selectOption (void)
       // Change to the new menu
       menu_selected = menuIndex;
 
+//Serial.print("came from menu=");
+//Serial.println(tempMenu);
+//Serial.print("came from opt=");
+//Serial.println(optSel);
+//Serial.print("change to menu=");
+//Serial.println(menu_selected);
+//Serial.print("change to opt=");
+//Serial.println(menus[menu_selected]->option_selected);
+
       // Store where you came from into the new menu so can get back when exit menu
       menus[menu_selected]->prev_menu = tempMenu;
 
       // Reset the option back to zero
-      menus[menu_selected]->option_selected = 0;
-
+//      menus[menu_selected]->option_selected = 0;
     }
   }
   else
@@ -236,6 +253,12 @@ void WatchMenu::createMenu (int8_t index, int8_t num_options, const char *name, 
 		menus[index]->options[opt_index] = NULL;
 		menus[index]->prev_menu = NULL;
 	}
+
+	// Set the start animination point...number of icons - 1 * icon width
+	menus[index]->animX = m_display.width() / 2;
+//Serial.print("create-animX:");
+//Serial.println(menus[index]->animX);
+
 }
 
 void WatchMenu::createOption (int8_t menu_index, int8_t opt_index,
@@ -405,6 +428,10 @@ bool WatchMenu::updateMenu()
   // Get the index to the sub menu
 	int8_t optSel = menus[menu_selected]->option_selected;
 	int8_t menuIndex = menus[menu_selected]->options[optSel]->menu_index;
+//Serial.print("menu_selected=");
+//Serial.println(menu_selected);
+//Serial.print("optSel=");
+//Serial.println(optSel);
 
 	// See if this option was to display a paged display
 //	if (menuIndex == MENU_PAGED_NEXT_PREV)
@@ -439,33 +466,35 @@ bool WatchMenu::menu_drawIcon()
   const int16_t displayHeight = m_display.height();
 
   bool bAnimating = true;
-//	static int animX = 64;
 
 //	int x = 64;
   int x = displayWidth / 2;
   x -= 48 * menus[menu_selected]->option_selected;
 
+  int16_t *animX = &menus[menu_selected]->animX;
 //Serial.print("x=");
 //Serial.println(x);
+//Serial.print("animX=");
+//Serial.println(*animX);
   {
     int8_t speed;
-    if (x > animX)
+    if (x > *animX)
     {
-      speed = ((x - animX) / 4) + 1;
+      speed = ((x - *animX) / 4) + 1;
       if (speed > 16)
 		speed = 16;
-      animX += speed;
-      if (x <= animX)
-		animX = x;
+      *animX += speed;
+      if (x <= *animX)
+		*animX = x;
     }
-    else if (x < animX)
+    else if (x < *animX)
     {
-      speed = ((animX - x) / 4) + 1;
+      speed = ((*animX - x) / 4) + 1;
       if (speed > 16)
       	speed = 16;
-      animX -= speed;
-      if (x >= animX)
-		animX = x;
+      *animX -= speed;
+      if (x >= *animX)
+		*animX = x;
     }
     else
     {
@@ -473,7 +502,7 @@ bool WatchMenu::menu_drawIcon()
     }
   }
 
-  x = animX - 16;
+  x = *animX - 16;
 
   // Copy the data from PROGMEM...max 20 chars
   char tmpStr[20] = { 0 };
@@ -506,10 +535,14 @@ bool WatchMenu::menu_drawIcon()
   img.height = 32;
 
   // Display each menu option
+//  Serial.print("Num:");
+//  Serial.println(menus[menu_selected]->num_options);
   for (byte i = 0; i < menus[menu_selected]->num_options; i++)
   {
     if (x < displayWidth && x > -32)
     {
+//  Serial.print("icon:");
+//  Serial.println(menus[menu_selected]->options[i]->icon == NULL);
       img.x = x;
       img.bitmap =
 	  menus[menu_selected]->options[i]->icon != NULL ?
@@ -541,11 +574,9 @@ void WatchMenu::resetMenu ()
   for (int menuLoop = 0; menuLoop < num_menus; menuLoop++)
   {
     menus[menuLoop]->option_selected = 0;
+    // Reset animation
+	menus[menuLoop]->animX = m_display.width() /  2;
   }
-
-  // Reset Animation
-  animX = 0;
-//  animX = m_display.width() / 2;
 }
 
 void WatchMenu::setTextSize (uint8_t size)
