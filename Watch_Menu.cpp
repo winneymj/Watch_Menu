@@ -521,9 +521,9 @@ bool WatchMenu::menu_drawIcon()
 
   uint8_t sel_opt = menus[menu_selected]->option_selected;
   strcpy_P (tmpStr, menus[menu_selected]->options[sel_opt]->name);
-//  m_display.setTextSize(textSize);
-//  m_display.setTextColor(BLACK);
-//  m_display.setCursor(0, displayHeight - 8);
+  // Get the string height specifically.
+  m_display.getTextBounds(tmpStr, 0, 0, &tempX, &tempY, &w, &h);
+  drawCentreString (tmpStr, displayWidth / 2, YPOS + 64 - (h / 2), textSize);
 
   return bAnimating;
 }
