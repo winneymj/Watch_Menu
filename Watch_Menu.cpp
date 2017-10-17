@@ -47,7 +47,7 @@ extern const uint8_t selectbar_bottom[];
 extern const uint8_t menu_default[];
 extern const uint8_t selectbar_topWidthPixels;
 
-WatchMenu::WatchMenu (Adafruit_SharpMem& display) : m_display (display)
+WatchMenu::WatchMenu (Adafruit_SharpMem& display) : m_display (display), m_inverted(false)
 {
 }
 
@@ -63,13 +63,7 @@ void WatchMenu::setUpFunc(pFunc func)
 
 void WatchMenu::setDrawFunc(pFunc func)
 {
-//Serial.println("setDrawFunc(): Enter");
-
-//Serial.print("menu_selected=");
-//Serial.println(menu_selected);
 	menus[menu_selected]->drawFunc = func;
-//Serial.print("menus[menu_selected]->drawFunc == NULL:");
-//Serial.println(menus[menu_selected]->drawFunc == NULL);
 }
 
 bool WatchMenu::menuDown(void)
@@ -97,7 +91,6 @@ void WatchMenu::downOption (void)
 {
 	while (true)
 	{
-		//Serial.println("MenuManager::downOption(void)");
 		menus[menu_selected]->option_selected++;
 		uint8_t sel = menus[menu_selected]->option_selected;
 
@@ -109,10 +102,6 @@ void WatchMenu::downOption (void)
 		// See if an option has been defined.  Exit if got one.
 		if (NULL != menus[menu_selected]->options[menus[menu_selected]->option_selected])
 		{
-//Serial.println("-------------------------");
-//Serial.print("menus[menu_selected]->option_selected=");
-//Serial.println(menus[menu_selected]->option_selected);
-//Serial.println("-------------------------");
 			return;
 		}
 	}
@@ -122,7 +111,6 @@ void WatchMenu::upOption ()
 {
 	while (true)
 	{
-		//Serial.println("MenuManager::upOption(void)");
 		menus[menu_selected]->option_selected--;
 		uint8_t sel = menus[menu_selected]->option_selected;
 
@@ -133,10 +121,6 @@ void WatchMenu::upOption ()
 		// See if an option has been defined.  Exit if got one.
 		if (NULL != menus[menu_selected]->options[menus[menu_selected]->option_selected])
 		{
-//Serial.println("-------------------------");
-//Serial.print("menus[menu_selected]->option_selected=");
-//Serial.println(menus[menu_selected]->option_selected);
-//Serial.println("-------------------------");
 			return;
 		}
 	}
@@ -145,30 +129,18 @@ void WatchMenu::upOption ()
 bool WatchMenu::selectOption (void)
 {
   // Move to the next menu, assuming the option selected is a menu
-
-//Serial.println("WatchMenu::selectOption(void)");
   int8_t optSel = menus[menu_selected]->option_selected;
   pFunc funct = menus[menu_selected]->options[optSel]->func;
   bool subMenu = (funct == NULL);
-//Serial.println("-------------------------");
-//Serial.print("menu_selected=");
-//Serial.println(menu_selected);
-//Serial.print("optSel=");
-//Serial.println(optSel);
-//Serial.print("subMenu=");
-//Serial.println(subMenu);
 
   if (subMenu == true)
   {
     // Get the index to the sub menu
     int8_t menuIndex = menus[menu_selected]->options[optSel]->menu_index;
 
-//Serial.print("menuIndex=");
-//Serial.println(menuIndex);
     // See if this is the exit option (assumed last option)
     if (optSel == (menus[menu_selected]->num_options - 1))
     {
-//Serial.println("EXIT SEL");
 		// Reset sub menu selected option to zero before we exit, so when
 		// we come back in we are back at start
 		menus[menu_selected]->option_selected = 0;
@@ -176,15 +148,8 @@ bool WatchMenu::selectOption (void)
 		// Reset animation X
 		menus[menu_selected]->animX = m_display.width() / 2;
 
-//Serial.print("menu_selected=");
-//Serial.println(menu_selected);
 		// Go back to previous menu
 		menu_selected = menus[menu_selected]->prev_menu;
-//Serial.print("menu_selected=");
-//Serial.println(menu_selected);
-
-// Reset the option back to zero
-      //			mMenus[mMenuSelected]->mOptionSelected = 0;
     }
     else
     {
@@ -194,20 +159,8 @@ bool WatchMenu::selectOption (void)
       // Change to the new menu
       menu_selected = menuIndex;
 
-//Serial.print("came from menu=");
-//Serial.println(tempMenu);
-//Serial.print("came from opt=");
-//Serial.println(optSel);
-//Serial.print("change to menu=");
-//Serial.println(menu_selected);
-//Serial.print("change to opt=");
-//Serial.println(menus[menu_selected]->option_selected);
-
       // Store where you came from into the new menu so can get back when exit menu
       menus[menu_selected]->prev_menu = tempMenu;
-
-      // Reset the option back to zero
-//      menus[menu_selected]->option_selected = 0;
     }
   }
   else
@@ -256,9 +209,6 @@ void WatchMenu::createMenu (int8_t index, int8_t num_options, const char *name, 
 
 	// Set the start animination point...number of icons - 1 * icon width
 	menus[index]->animX = m_display.width() / 2;
-//Serial.print("create-animX:");
-//Serial.println(menus[index]->animX);
-
 }
 
 void WatchMenu::createOption (int8_t menu_index, int8_t opt_index,
@@ -299,8 +249,6 @@ void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, pFunc actionF
 {
 	menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
 	menus[menu_index]->options[opt_index]->func = actionFunc;
-	//	menus[menu_index]->options[opt_index]->icon = icon;
-	//	menus[menu_index]->options[opt_index]->name = name;
 	menus[menu_index]->options[opt_index]->menu_index = prev_menu_index;
 	menus[menu_index]->options[opt_index]->invert_start = -1;
 	menus[menu_index]->options[opt_index]->invert_length = 0;
@@ -310,27 +258,10 @@ void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *n
 			uint8_t prev_menu_index)
 {
 	menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
-	//	menus[menu_index]->options[opt_index]->func = actionFunc;
-	//	menus[menu_index]->options[opt_index]->icon = icon;
 	strcpy_P(menus[menu_index]->options[opt_index]->name, name);
 	menus[menu_index]->options[opt_index]->menu_index = prev_menu_index;
 	menus[menu_index]->options[opt_index]->invert_start = -1;
 	menus[menu_index]->options[opt_index]->invert_length = 0;
-}
-
-void WatchMenu::setStringMenuOptionInverted(int8_t menu_index, int8_t opt_index, int8_t charStart, int8_t length)
-{
-//Serial.println("setStringMenuOptionInverted:enter");
-	if (NULL != menus[menu_index]->options[opt_index])
-	{
-//Serial.print("setStringMenuOptionInverted:menu_index=");
-//Serial.println(menu_index);
-//Serial.print("setStringMenuOptionInverted:opt_index=");
-//Serial.println(opt_index);
-		menus[menu_index]->options[opt_index]->invert_start = charStart;
-		menus[menu_index]->options[opt_index]->invert_length = length;
-	}
-//Serial.println("setStringMenuOptionInverted:exit");
 }
 
 void WatchMenu::menu_drawStr()
@@ -357,7 +288,7 @@ void WatchMenu::menu_drawStr()
 		{
 			if(opt == menus[menu_selected]->option_selected)
 			{
-				drawString(">", false, 0, YPOS + (h * (opt + 2)));
+				drawString(">", 0, YPOS + (h * (opt + 2)));
 			}
 			const char *str = menus[menu_selected]->options[opt]->name;
 			strcpy_P (tmpStr, str);
@@ -379,21 +310,21 @@ void WatchMenu::menu_drawStr()
 			int16_t ypos = YPOS + (h * (opt + 2));
 			int16_t xpos = fontWidth();
 
-			drawString(tmpStartStr, false, xpos, ypos);
+			drawString(tmpStartStr, xpos, ypos);
 			xpos += fontWidth() * strlen(tmpStartStr);
 			// Display black background
         	m_display.fillRect(xpos, ypos - (fontHeight() +  1), fontWidth() * invLen, fontHeight() +  3, BLACK);
 
 			// Back to white on black
 	        m_display.setTextColor(WHITE, BLACK);
-			drawString(tmpInvertStr, false, xpos, ypos);
+			drawString(tmpInvertStr, xpos, ypos);
 	        m_display.setTextColor(BLACK, WHITE);
 			xpos += fontWidth() * strlen(tmpInvertStr);
-			drawString(tmpEndStr, false, xpos, ypos);
+			drawString(tmpEndStr, xpos, ypos);
 		}
 		else
 		{
-			drawString(tmpStr, false, fontWidth(), YPOS + (h * (opt + 2)));
+			drawString(tmpStr, fontWidth(), YPOS + (h * (opt + 2)));
 		}
 	}
 
@@ -404,20 +335,16 @@ void WatchMenu::menu_drawStr()
 
 	if(opt == menus[menu_selected]->option_selected)
 	{
-		drawString(">", false, xpos, YPOS + (h * (opt + 1)));
+		drawString(">", xpos, YPOS + (h * (opt + 1)));
 	}
 	strcpy_P (tmpStr, str);
-	drawString(tmpStr, false, xpos + fontWidth(), YPOS + (h * (opt + 1)));
+	drawString(tmpStr, xpos + fontWidth(), YPOS + (h * (opt + 1)));
 }
 bool WatchMenu::updateMenu()
 {
-#ifndef SLEEP_PROCESSOR
-//Serial.println("updateMenu():Enter");
-#endif
+	m_display.setFont(m_font);
 
-  m_display.setFont(m_font);
-
-  bool bAnimating = false;
+	bool bAnimating = false;
 
 	if ( MENU_TYPE_STR == menus[menu_selected]->type)
 	{
@@ -425,36 +352,19 @@ bool WatchMenu::updateMenu()
 	}
 	else
 	{
-  // Get the index to the sub menu
-	int8_t optSel = menus[menu_selected]->option_selected;
-	int8_t menuIndex = menus[menu_selected]->options[optSel]->menu_index;
-//Serial.print("menu_selected=");
-//Serial.println(menu_selected);
-//Serial.print("optSel=");
-//Serial.println(optSel);
+		// Get the index to the sub menu
+		int8_t optSel = menus[menu_selected]->option_selected;
+		int8_t menuIndex = menus[menu_selected]->options[optSel]->menu_index;
 
-	// See if this option was to display a paged display
-//	if (menuIndex == MENU_PAGED_NEXT_PREV)
-//	{
-//Serial.println("MENU_PAGED_NEXT_PREV");
-//	}
-//	else
-  {
-    // Display as regular icon
-    // Get the first menu to start with...change later to get current
-    bAnimating = menu_drawIcon();
+		{
+			// Display as regular icon
+			// Get the first menu to start with...change later to get current
+			bAnimating = menu_drawIcon();
+		}
 	}
-  }
 	// Draw stuff
-#ifndef SLEEP_PROCESSOR
-//Serial.print("menu_selected=");
-//Serial.println(menu_selected);
-#endif
 	if(menus[menu_selected]->drawFunc != NULL)
 	{
-//#ifndef SLEEP_PROCESSOR
-//Serial.println("menus[menu_selected]->drawFunc!=NULL");
-//#endif
 		menus[menu_selected]->drawFunc();
 	}
   return bAnimating;
@@ -472,10 +382,6 @@ bool WatchMenu::menu_drawIcon()
   x -= 48 * menus[menu_selected]->option_selected;
 
   int16_t *animX = &menus[menu_selected]->animX;
-//Serial.print("x=");
-//Serial.println(x);
-//Serial.print("animX=");
-//Serial.println(*animX);
   {
     int8_t speed;
     if (x > *animX)
@@ -520,7 +426,7 @@ bool WatchMenu::menu_drawIcon()
   // FIX: struct uses heap, should use stack
   uint8_t fix = selectbar_topWidthPixels;
   s_image img = newImage((displayWidth / 2) - (selectbar_topWidthPixels / 2),
-			 YPOS + 14, selectbar_top, fix, 8, BLACK, NOINVERT);
+			 YPOS + 14, selectbar_top, fix, 8, m_inverted ? WHITE : BLACK, NOINVERT);
 
   // Draw ...
   ultraFastDrawBitmap (&img);
@@ -535,14 +441,10 @@ bool WatchMenu::menu_drawIcon()
   img.height = 32;
 
   // Display each menu option
-//  Serial.print("Num:");
-//  Serial.println(menus[menu_selected]->num_options);
   for (byte i = 0; i < menus[menu_selected]->num_options; i++)
   {
     if (x < displayWidth && x > -32)
     {
-//  Serial.print("icon:");
-//  Serial.println(menus[menu_selected]->options[i]->icon == NULL);
       img.x = x;
       img.bitmap =
 	  menus[menu_selected]->options[i]->icon != NULL ?
@@ -584,203 +486,6 @@ void WatchMenu::setTextSize (uint8_t size)
 	m_display.setTextSize(size);
 	textSize = size;
 }
-// --------------------------------------------------------------------------------------------//
-
-WatchPage::WatchPage (Adafruit_SharpMem& display, int8_t itemsPerPage) :
-    m_display (display), m_currentMenuOption (NONE), m_currentPage (0), m_itemsPerPage (
-	itemsPerPage)
-{
-}
-
-void WatchPage::begin()
-{
-  m_currentMenuOption = NONE;
-  m_currentPage = 0;
-}
-
-
-void WatchPage::display (uint8_t currentPage)
-{
-  // Save the current page in the class
-  m_currentPage = currentPage;
-
-  if (m_currentMenuOption == NEXT_PAGE)
-  {
-    m_display.setTextColor (BLACK, WHITE);
-  }
-  else
-  {
-    // Display "Next Page" and "Exit" on each page
-    m_display.setTextColor (WHITE);
-  }
-
-  // Only display this if more then 1 page
-  m_display.setCursor (0, 0);
-  m_display.print (F ("<Next Page>"));
-
-  if (currentPage > 0)
-  {
-    if (m_currentMenuOption == PREV_PAGE)
-    {
-      m_display.setTextColor (BLACK, WHITE);
-    }
-    else
-    {
-      // Display "Next Page" and "Exit" at the bottom of each page
-      m_display.setTextColor (WHITE);
-    }
-
-    // Only display this not on page 1
-    m_display.setCursor (70, 0);
-    m_display.print (F ("<Prev Page>"));
-  }
-
-  if (m_currentMenuOption == EXIT_PAGE)
-  {
-    m_display.setTextColor (BLACK, WHITE);
-  }
-  else
-  {
-    // Display "Next Page" and "Exit" at the bottom of each page
-    m_display.setTextColor (WHITE);
-  }
-
-  m_display.setCursor (140, 0);
-  m_display.print (F ("<Exit>"));
-}
-
-// returns true if we are going into the menu else false
-bool WatchPage::handleUpOption (int8_t& selected)
-{
-Serial.print("handleUpOption:");
-Serial.println(selected);
-  // If we deduct 1 from this do we exit from the
-  // page data and head into the menu.  We know this
-  // if the selected passed is < 0
-
-  int8_t newSel = selected - 1;
-
-  // Check if into the menu area.
-  if (newSel < 0)
-  {
-    // Must be into the menu at top of page now
-    m_currentMenuOption++;
-
-    // Check the current page and if we are
-    // on page 1 then the Prev option is not displayed
-    // so move straight to the exit option.
-    if (m_currentPage == 0 && m_currentMenuOption == PREV_PAGE)
-    {
-      m_currentMenuOption++;
-    }
-
-    // If we are past the exit page then go back to the
-    // Next Page option
-    if (m_currentMenuOption > EXIT_PAGE)
-    {
-      m_currentMenuOption = NEXT_PAGE;
-    }
-//Serial.println("Into Menu");
-    return true;
-  }
-  else
-  {
-    // Not in the menu, but in the list so send back a new
-    // selected item.
-    selected--;
-
-//		if (selected < 0)
-//		{
-//		  // Roll to last page
-//			selected = stationSize - 1;
-//		}
-  }
-
-  return false;
-}
-
-// returns true if we are going into the menu else false
-bool WatchPage::handleDownOption (int8_t& selected)
-{
-Serial.print("handleDownOption:");
-Serial.println(selected);
-  // Check if we are in the menu and if the down is selected
-  // go back into the list and get out of the menu.
-  if (m_currentMenuOption != NONE)
-  {
-    // If we have just exited the menu then
-    // reset to top of the page
-    selected = 0;
-    m_currentMenuOption = NONE;
-    return true;
-  }
-  else
-  {
-    // Move to the next item on the page
-    selected++;
-
-    // See if we are on the last page and
-    // make sure when we move past the end
-    // of the list that we go back to the start.
-    bool lastPage = (m_currentPage == (m_totalItemsInList / m_itemsPerPage));
-    if (lastPage)
-    {
-      uint8_t lastItem = m_totalItemsInList - (m_currentPage * m_itemsPerPage)
-	  - 1;
-
-      if (selected > lastItem)
-      {
-	selected = 0;
-      }
-    }
-    else
-    {
-      // Rotate back to start of the page if
-      // we reached the end.
-      if (selected > (m_itemsPerPage - 1))
-      {
-	selected = 0;
-      }
-    }
-  }
-
-  return false;
-}
-
-// returns true if we are going into the menu else false
-WatchPage::page_options
-WatchPage::handleSelectOption (int8_t& currentPageNumber)
-{
-  Serial.println (m_currentMenuOption);
-
-  if (m_currentMenuOption == NEXT_PAGE)
-  {
-    // Make sure don't go past last page
-    bool lastPage = (m_currentPage == (m_totalItemsInList / m_itemsPerPage));
-    if (!lastPage)
-    {
-      currentPageNumber++;
-    }
-  }
-  else if (m_currentMenuOption == PREV_PAGE)
-  {
-    currentPageNumber--;
-
-    // If this is the first page then no Prev Page
-    // will be displayed so reset to Next Page
-    if (currentPageNumber == 0)
-    {
-      m_currentMenuOption = NEXT_PAGE;
-    }
-  }
-  else if (m_currentMenuOption == EXIT_PAGE)
-  {
-    m_currentMenuOption = NONE;
-    return EXIT_PAGE;
-  }
-
-  return (page_options) m_currentMenuOption;
-}
 
 /***************************************************************************************
 ** Function name:           drawCentreString
@@ -797,21 +502,17 @@ void WatchMenu::drawCentreString(char *str, int dX, int poY, int size)
 
 	int poX = dX - w / 2;
 	m_display.setCursor(poX, poY);
+	m_display.setTextColor(m_inverted ? WHITE: BLACK, m_inverted ? BLACK : WHITE);
 	m_display.print(str);
 }
 
-void WatchMenu::drawString(char* str, bool invert, byte x, byte y)
+void WatchMenu::drawString(char* str, byte x, byte y)
 {
-//Serial.print("drawString x,y=");
-//Serial.print(x);
-//Serial.print(",");
-//Serial.println(y);
-	if (invert)
-		m_display.setTextColor(WHITE, BLACK);
+	m_display.setTextColor(m_inverted ? WHITE: BLACK, m_inverted ? BLACK : WHITE);
 	m_display.setCursor(x, y);
 	m_display.print(str);
-	if (invert)
-		m_display.setTextColor(BLACK, WHITE);
+//	if (m_invert)
+//		m_display.setTextColor(BLACK, WHITE);
 }
 
 void WatchMenu::setFont(const GFXfont *font)
@@ -841,38 +542,7 @@ void WatchMenu::selectedOption(int8_t menu_index, int8_t option_index)
 	menus[menu_index]->option_selected = option_index;
 }
 
-// --------------------------------------------------------------------------------------------//
-
-OLEDKeyboard::OLEDKeyboard(Adafruit_SharpMem& display): m_display(display)
+void WatchMenu::invertDisplay(bool state)
 {
+	m_inverted = state;
 }
-
-void OLEDKeyboard::display(uint8_t currentPage)
-{
-  uint8_t xpos = 50;
-  uint8_t ypos = 32;
-
-  m_display.setTextSize(1);
-  m_display.setTextColor(WHITE);
-  m_display.setCursor(xpos, ypos);
-
-  // Display the numbers 0-9 at top
-  for (uint8_t i = 0; i < 10; i++)
-  {
-    m_display.setCursor(xpos + 10, ypos);
-    m_display.write(48 + i);
-  }
-}
-void OLEDKeyboard::handleUpOption(int8_t& selected)
-{
-
-}
-void OLEDKeyboard::handleDownOption(int8_t& selected)
-{
-
-}
-void OLEDKeyboard::handleSelectOption()
-{
-
-}
-

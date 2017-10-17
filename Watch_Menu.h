@@ -87,43 +87,6 @@ typedef struct
 	pFunc drawFunc;
 }s_menu;
 
-class OLEDKeyboard
-{
-public:
-  OLEDKeyboard(Adafruit_SharpMem& display);
-  void display(uint8_t currentPage);
-  void handleUpOption(int8_t& selected);
-  void handleDownOption(int8_t& selected);
-  void handleSelectOption();
-
-private:
-  Adafruit_SharpMem& m_display;
-
-};
-
-class WatchPage
-{
-public:
-	enum options {NONE = 0, NEXT_PAGE, PREV_PAGE, EXIT_PAGE};
-	typedef options page_options;
-
-	WatchPage(Adafruit_SharpMem& display, int8_t itemsPerPage);
-	void begin();
-	void setTotalItemsInList(int16_t totalItemsInList) { m_totalItemsInList = totalItemsInList; };
-	void display(uint8_t currentPage);
-	bool handleUpOption(int8_t& selected);
-	bool handleDownOption(int8_t& selected);
-	page_options handleSelectOption(int8_t& currentPageNumber);
-
-
-private:
-	Adafruit_SharpMem& m_display;
-	int8_t m_currentMenuOption; // Maps to the enum above
-	int8_t m_currentPage;
-	int8_t m_itemsPerPage;
-	int16_t m_totalItemsInList = 0;
-};
-
 class WatchMenu
 {
 public:
@@ -146,7 +109,7 @@ public:
 	void resetMenu(void);
 	bool menu_drawIcon();
 	void setTextSize(uint8_t size);
-	void drawString(char* str, bool invert, byte x, byte y);
+	void drawString(char* str, byte x, byte y);
 	void drawCentreString(char *str, int dX, int poY, int size);
 	void setDownFunc(pFunc func);
 	void setUpFunc(pFunc func);
@@ -156,7 +119,7 @@ public:
 	void selectedOption(int8_t menu_index, int8_t option_index);
 	uint8_t fontWidth(){ return m_fontWidth; };
 	uint8_t fontHeight(){ return m_fontHeight; };
-	void setStringMenuOptionInverted(int8_t menu_index, int8_t opt_index, int8_t charStart, int8_t length);
+	void invertDisplay(bool state);
 
 
   private:
@@ -172,6 +135,7 @@ public:
 	GFXfont *m_font;
 	uint8_t m_fontWidth;
 	uint8_t m_fontHeight;
+	bool m_inverted;
 };
 
 
