@@ -275,7 +275,7 @@ void WatchMenu::menu_drawStr()
 	// Calculate Y position using the height of the font.
 
 	uint8_t h = fontHeight() + (fontHeight() / 2);  // Add some spacing
-	drawCentreString (tmpStr, displayWidth / 2, YPOS + h, textSize);
+	drawCentreString(tmpStr, displayWidth / 2, YPOS + h, textSize);
 
 	byte count = menus[menu_selected]->num_options;
 	byte opt = 0;
@@ -298,6 +298,7 @@ void WatchMenu::menu_drawStr()
 		int16_t invStart = menus[menu_selected]->options[opt]->invert_start;
 		int16_t invLen = menus[menu_selected]->options[opt]->invert_length;
 
+
 		if (invStart != -1)
 		{
 			// Split the string into 3 parts around the invertion
@@ -312,13 +313,13 @@ void WatchMenu::menu_drawStr()
 
 			drawString(tmpStartStr, xpos, ypos);
 			xpos += fontWidth() * strlen(tmpStartStr);
-			// Display black background
-        	m_display.fillRect(xpos, ypos - (fontHeight() +  1), fontWidth() * invLen, fontHeight() +  3, BLACK);
+			// Display background
+        	m_display.fillRect(xpos, ypos - (fontHeight() +  1), fontWidth() * invLen, fontHeight() +  3, m_inverted ? WHITE : BLACK);
 
-			// Back to white on black
-	        m_display.setTextColor(WHITE, BLACK);
+			// invert the text.
+			m_inverted = !m_inverted;
 			drawString(tmpInvertStr, xpos, ypos);
-	        m_display.setTextColor(BLACK, WHITE);
+			m_inverted = !m_inverted;
 			xpos += fontWidth() * strlen(tmpInvertStr);
 			drawString(tmpEndStr, xpos, ypos);
 		}
@@ -420,7 +421,7 @@ bool WatchMenu::menu_drawIcon()
 
   // Get the string height specifically.
   m_display.getTextBounds(tmpStr, 0, 0, &tempX, &tempY, &w, &h);
-  drawCentreString (tmpStr, displayWidth / 2, YPOS + h, textSize);
+  drawCentreString(tmpStr, displayWidth / 2, YPOS + h, textSize);
 
   // Create image struct
   // FIX: struct uses heap, should use stack
@@ -458,7 +459,7 @@ bool WatchMenu::menu_drawIcon()
   strcpy_P (tmpStr, menus[menu_selected]->options[sel_opt]->name);
   // Get the string height specifically.
   m_display.getTextBounds(tmpStr, 0, 0, &tempX, &tempY, &w, &h);
-  drawCentreString (tmpStr, displayWidth / 2, YPOS + 64 - (h / 2), textSize);
+  drawCentreString(tmpStr, displayWidth / 2, YPOS + 64 - (h / 2), textSize);
 
   return bAnimating;
 }
@@ -508,11 +509,9 @@ void WatchMenu::drawCentreString(char *str, int dX, int poY, int size)
 
 void WatchMenu::drawString(char* str, byte x, byte y)
 {
-	m_display.setTextColor(m_inverted ? WHITE: BLACK, m_inverted ? BLACK : WHITE);
+	m_display.setTextColor(m_inverted ? WHITE : BLACK, m_inverted ? BLACK : WHITE);
 	m_display.setCursor(x, y);
 	m_display.print(str);
-//	if (m_invert)
-//		m_display.setTextColor(BLACK, WHITE);
 }
 
 void WatchMenu::setFont(const GFXfont *font)
