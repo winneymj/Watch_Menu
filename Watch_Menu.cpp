@@ -47,7 +47,7 @@ extern const uint8_t selectbar_bottom[];
 extern const uint8_t menu_default[];
 extern const uint8_t selectbar_topWidthPixels;
 
-WatchMenu::WatchMenu (Adafruit_SharpMem& display) : m_display (display), m_inverted(false)
+WatchMenu::WatchMenu (Adafruit_SharpMem& display) : m_display (display), m_inverted(false), menus(NULL)
 {
 }
 
@@ -175,6 +175,12 @@ void WatchMenu::initMenu(uint8_t num)
 {
 	num_menus = num;
 	menus = new s_menu*[num]; // Allocate space for the menus.  Array of pointers to menus
+	
+	for (int index = 0; index < num; index++)
+	{
+		menus[index] = NULL;
+	}
+	
 	menu_selected = 0;
 	m_font = NULL;
 	// Default font to default 5x7 builtin
@@ -191,7 +197,10 @@ void WatchMenu::createMenu (int8_t index, int8_t num_options, const char *name, 
 // Create a menu by allocating space
 void WatchMenu::createMenu (int8_t index, int8_t num_options, const char *name, int8_t menu_type, pFunc downFunc, pFunc upFunc)
 {
-	menus[index] = new s_menu; // allocate space for the menu
+	if (menus[index] == NULL)
+	{
+		menus[index] = new s_menu; // allocate space for the menu
+	}
 	strcpy_P(menus[index]->name, name);
 	menus[index]->options = new s_option*[num_options]; // Allocate array of pointers to options
 	menus[index]->num_options = num_options;
@@ -223,7 +232,11 @@ void WatchMenu::createOption (int8_t menu_index, int8_t opt_index,
 void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *name,
 			const uint8_t *icon, pFunc actionFunc)
 {
-	menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
+	if (menus[menu_index]->options[opt_index] == NULL)
+	{
+		menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
+	}
+
 	menus[menu_index]->options[opt_index]->func = actionFunc;
 	menus[menu_index]->options[opt_index]->icon = icon;
 	strcpy_P(menus[menu_index]->options[opt_index]->name, name);
@@ -235,7 +248,10 @@ void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *n
 void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *name,
 			const uint8_t *icon, uint8_t prev_menu_index)
 {
-	menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
+	if (menus[menu_index]->options[opt_index] == NULL)
+	{
+		menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
+	}
 	menus[menu_index]->options[opt_index]->func = NULL;
 	menus[menu_index]->options[opt_index]->icon = icon;
 	strcpy_P(menus[menu_index]->options[opt_index]->name, name);
@@ -247,6 +263,10 @@ void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *n
 void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, pFunc actionFunc,
 			uint8_t prev_menu_index)
 {
+	if (menus[menu_index]->options[opt_index] == NULL)
+	{
+		menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
+	}
 	menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
 	menus[menu_index]->options[opt_index]->func = actionFunc;
 	menus[menu_index]->options[opt_index]->menu_index = prev_menu_index;
@@ -257,6 +277,10 @@ void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, pFunc actionF
 void WatchMenu::createOption (int8_t menu_index, int8_t opt_index, const char *name,
 			uint8_t prev_menu_index)
 {
+	if (menus[menu_index]->options[opt_index] == NULL)
+	{
+		menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
+	}
 	menus[menu_index]->options[opt_index] = new s_option; // allocate space for the option
 	strcpy_P(menus[menu_index]->options[opt_index]->name, name);
 	menus[menu_index]->options[opt_index]->menu_index = prev_menu_index;
@@ -299,7 +323,7 @@ void WatchMenu::menu_drawStr()
 		int16_t invLen = menus[menu_selected]->options[opt]->invert_length;
 
 
-		if (invStart != -1)
+		if (invStart >= 0)
 		{
 			// Split the string into 3 parts around the invertion
 			char tmpStartStr[20] = { 0 };
